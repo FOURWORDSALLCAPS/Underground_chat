@@ -1,1 +1,2 @@
 environs==9.5.0
+aiofiles==23.2.1
