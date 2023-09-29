@@ -1,13 +1,14 @@
 import asyncio
 import aiofiles
+import argparse
 
 from datetime import datetime
 from environs import Env
 
 
-async def stream_chat(host, port):
+async def stream_chat(host, port, file_path):
     try:
-        async with aiofiles.open("chat_history.txt", mode="a", encoding="utf-8") as file:
+        async with aiofiles.open(file_path, mode="a", encoding="utf-8") as file:
             reader, writer = await asyncio.open_connection(host, port)
 
             while True:
@@ -32,7 +33,13 @@ def main():
     env.read_env()
     chat_host = env('CHAT_HOST')
     chat_port = env('CHAT_PORT')
-    asyncio.run(stream_chat(chat_host, chat_port))
+    chat_history_path = env('CHAT_HISTORY_PATH')
+    parser = argparse.ArgumentParser(description='Запись и вывод переписки из чата в реальном времени')
+    parser.add_argument('--host', default=chat_host, help='Хост сервера')
+    parser.add_argument('--port', default=chat_port, help='Порт сервера')
+    parser.add_argument('--history', default=chat_history_path, help='Путь к файлу с историей переписки')
+    args = parser.parse_args()
+    asyncio.run(stream_chat(args.host, args.port, args.history))
 
 
 if __name__ == '__main__':
