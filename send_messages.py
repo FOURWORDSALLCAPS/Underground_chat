@@ -2,14 +2,14 @@ import asyncio
 import argparse
 import logging
 
-
 from environs import Env
-
 
 logging.basicConfig(level=logging.DEBUG)
 
 
 async def send_message(host, port, token, message):
+    reader = None
+    writer = None
     try:
         reader, writer = await asyncio.open_connection(host, port)
 
@@ -20,17 +20,26 @@ async def send_message(host, port, token, message):
         await writer.drain()
 
         while True:
-            response = await reader.read(1000)
-            if not response:
+            response_chunk = await reader.readuntil(b'\n')
+            if not response_chunk:
                 break
-            logger.debug(f'{response.decode()!r}')
 
-        writer.close()
-        await writer.wait_closed()
+            response_str = response_chunk.decode().strip()
+            logger.debug(f'{response_str!r}')
+
+            if response_str == 'null':
+                logger.error("Неизвестный токен. Проверьте его или зарегистрируйте заново.")
+                break
 
     except ConnectionResetError:
         logger.debug("Сетевое подключение разорвано. Повторная попытка соединения через 5 секунд...")
         await asyncio.sleep(5)
+    except Exception as e:
+        logger.error(f'Произошла ошибка: {str(e)}')
+    finally:
+        if not reader.at_eof():
+            writer.close()
+            await writer.wait_closed()
 
 
 def main():
