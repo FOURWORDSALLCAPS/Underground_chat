@@ -23,6 +23,7 @@ async def stream_chat(host, port, file_path):
                 formatted_text = '\n'.join(formatted_lines)
                 await file.write(formatted_text)
                 print(formatted_text, end='')
+
     except ConnectionResetError:
         print("Сетевое подключение разорвано. Повторная попытка соединения через 5 секунд...")
         await asyncio.sleep(5)

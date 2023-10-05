@@ -139,3 +139,4 @@ media
 mediastaticfiles/
 staticfiles/
 chat_history.txt
+account_hash.txt
