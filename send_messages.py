@@ -1,7 +1,12 @@
 import asyncio
 import argparse
+import logging
+
 
 from environs import Env
+
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 async def send_message(host, port, token, message):
@@ -11,17 +16,20 @@ async def send_message(host, port, token, message):
         writer.write(token.encode() + b'\n')
         await writer.drain()
 
-        writer.write(message.encode() + b'\n')
+        writer.write(message.encode() + b'\n' + b'\n')
         await writer.drain()
 
-        writer.write(b'\n')
-        await writer.drain()
+        while True:
+            response = await reader.read(1000)
+            if not response:
+                break
+            logger.debug(f'{response.decode()!r}')
 
         writer.close()
         await writer.wait_closed()
 
     except ConnectionResetError:
-        print("Сетевое подключение разорвано. Повторная попытка соединения через 5 секунд...")
+        logger.debug("Сетевое подключение разорвано. Повторная попытка соединения через 5 секунд...")
         await asyncio.sleep(5)
 
 
@@ -40,4 +48,5 @@ def main():
 
 
 if __name__ == '__main__':
+    logger = logging.getLogger('sender')
     main()
